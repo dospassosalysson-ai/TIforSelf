@@ -531,7 +531,9 @@ a {
 }
 
 .course-intro,
-.study-lesson {
+.study-lesson,
+.login-section,
+.session-bar {
   margin-top: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -540,7 +542,8 @@ a {
 }
 
 .course-intro h2,
-.study-lesson h2 {
+.study-lesson h2,
+.login-section h2 {
   margin: 0 0 12px;
   font-size: 1.8rem;
 }
@@ -551,8 +554,73 @@ a {
 }
 
 .study-lesson p,
-.course-intro p {
+.course-intro p,
+.login-section p {
   color: #34434a;
+}
+
+.requires-auth:not(.is-authenticated) .course-document > section:not(.login-section) {
+  display: none;
+}
+
+.requires-auth.is-authenticated .login-section {
+  display: none;
+}
+
+.login-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 7px;
+  color: #17343b;
+  font-weight: 700;
+}
+
+.login-form input {
+  min-height: 42px;
+  border: 1px solid #cddbdd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.login-message {
+  margin-top: 14px;
+  border-radius: 8px;
+  background: #f7fbfc;
+  color: #46575f;
+  padding: 12px;
+  font-weight: 700;
+}
+
+.login-message.success {
+  background: #edf8f2;
+  color: #0d5f37;
+}
+
+.login-message.error {
+  background: #fff0f3;
+  color: #7a3347;
+}
+
+.session-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 5px solid var(--teal);
+  padding: 14px 18px;
+}
+
+.session-bar span {
+  color: #17343b;
+  font-weight: 700;
 }
 
 .study-lesson li + li {
@@ -1348,11 +1416,29 @@ a {
   .student-fields {
     grid-template-columns: 1fr;
   }
+
+  .login-form {
+    grid-template-columns: 1fr;
+  }
+
+  .session-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 @media print {
   .course-page {
     background: white;
+  }
+
+  .requires-auth:not(.is-authenticated) .course-document > section:not(.login-section) {
+    display: block;
+  }
+
+  .login-section,
+  .session-bar {
+    display: none !important;
   }
 
   .course-document {

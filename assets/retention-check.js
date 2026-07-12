@@ -3,6 +3,13 @@ const quizResult = document.querySelector("#quizResult");
 const resetQuiz = document.querySelector("#resetQuiz");
 const studentName = document.querySelector("#studentName");
 const className = document.querySelector("#className");
+const studentLoginForm = document.querySelector("#studentLoginForm");
+const loginFullName = document.querySelector("#loginFullName");
+const loginCpf = document.querySelector("#loginCpf");
+const loginMessage = document.querySelector("#loginMessage");
+const studentSessionName = document.querySelector("#studentSessionName");
+const logoutStudent = document.querySelector("#logoutStudent");
+const SESSION_KEY = "cursoTiStudentSession";
 
 function getSupabaseConfig() {
   return window.COURSE_CONFIG || {};
@@ -13,24 +20,94 @@ function isSupabaseConfigured() {
   return Boolean(config.supabaseUrl && config.supabaseAnonKey);
 }
 
-async function submitToSupabase(payload) {
+function supabaseEndpoint(path) {
   const config = getSupabaseConfig();
-  const endpoint = `${config.supabaseUrl.replace(/\/$/, "")}/rest/v1/retention_submissions`;
+  return `${config.supabaseUrl.replace(/\/$/, "")}${path}`;
+}
 
-  const response = await fetch(endpoint, {
+function supabaseHeaders(prefer = "return=representation") {
+  const config = getSupabaseConfig();
+  return {
+    "Content-Type": "application/json",
+    "apikey": config.supabaseAnonKey,
+    "Authorization": `Bearer ${config.supabaseAnonKey}`,
+    "Prefer": prefer
+  };
+}
+
+async function submitToSupabase(payload) {
+  const response = await fetch(supabaseEndpoint("/rest/v1/retention_submissions"), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": config.supabaseAnonKey,
-      "Authorization": `Bearer ${config.supabaseAnonKey}`,
-      "Prefer": "return=minimal"
-    },
+    headers: supabaseHeaders("return=minimal"),
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || `Erro HTTP ${response.status}`);
+  }
+}
+
+async function authenticateStudent(fullName, cpf) {
+  const response = await fetch(supabaseEndpoint("/rest/v1/rpc/authenticate_student"), {
+    method: "POST",
+    headers: supabaseHeaders(),
+    body: JSON.stringify({
+      p_full_name: fullName,
+      p_cpf: cpf
+    })
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `Erro HTTP ${response.status}`);
+  }
+
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows[0] : rows;
+}
+
+function getCurrentStudent() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCurrentStudent(student) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(student));
+  applyStudentSession(student);
+}
+
+function clearCurrentStudent() {
+  sessionStorage.removeItem(SESSION_KEY);
+  applyStudentSession(null);
+}
+
+function applyStudentSession(student) {
+  const loggedIn = Boolean(student?.student_id);
+  document.body.classList.toggle("is-authenticated", loggedIn);
+
+  if (studentSessionName) {
+    studentSessionName.textContent = loggedIn
+      ? `Aluno: ${student.full_name}`
+      : "Aluno nao autenticado";
+  }
+
+  if (studentName) {
+    studentName.value = loggedIn ? student.full_name : "";
+    studentName.readOnly = loggedIn;
+  }
+
+  if (className) {
+    className.value = loggedIn ? (student.class_name || "") : "";
+    className.readOnly = loggedIn && Boolean(student.class_name);
+  }
+
+  if (loginMessage && loggedIn) {
+    loginMessage.textContent = "Acesso liberado. Voce ja pode estudar e responder o check final.";
   }
 }
 
@@ -60,6 +137,14 @@ if (quizForm && quizResult) {
     clearQuizState();
 
     const questions = Array.from(quizForm.querySelectorAll(".quiz-question"));
+    const currentStudent = getCurrentStudent();
+
+    if (!currentStudent?.student_id) {
+      quizResult.innerHTML = "<p class=\"submission-error\">Entre com nome completo e CPF antes de enviar o check.</p>";
+      document.querySelector("#student-login")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     let correct = 0;
     let missing = 0;
     const wrongItems = [];
@@ -114,8 +199,9 @@ if (quizForm && quizResult) {
 
     const payload = {
       course_slug: getSupabaseConfig().courseSlug || "curso-ti-basico-bloco-1",
-      student_name: studentName?.value.trim() || "Aluno sem nome",
-      class_name: className?.value.trim() || null,
+      student_id: currentStudent.student_id,
+      student_name: currentStudent.full_name,
+      class_name: currentStudent.class_name || className?.value.trim() || null,
       score: correct,
       total_questions: total,
       correct_count: correct,
@@ -163,3 +249,40 @@ if (quizForm && quizResult) {
     quizResult.textContent = "Responda as perguntas e clique em corrigir para ver seu resultado.";
   });
 }
+
+studentLoginForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!isSupabaseConfigured()) {
+    loginMessage.textContent = "Supabase ainda nao configurado no Render. Configure as variaveis de ambiente antes de usar login.";
+    loginMessage.className = "login-message error";
+    return;
+  }
+
+  loginMessage.textContent = "Validando acesso...";
+  loginMessage.className = "login-message";
+
+  try {
+    const student = await authenticateStudent(loginFullName.value.trim(), loginCpf.value.trim());
+
+    if (!student?.student_id) {
+      throw new Error("Nome ou CPF invalidos.");
+    }
+
+    setCurrentStudent(student);
+    loginCpf.value = "";
+    loginMessage.className = "login-message success";
+    document.querySelector(".course-intro")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    clearCurrentStudent();
+    loginMessage.textContent = `Nao foi possivel entrar. ${error.message}`;
+    loginMessage.className = "login-message error";
+  }
+});
+
+logoutStudent?.addEventListener("click", () => {
+  clearCurrentStudent();
+  document.querySelector("#student-login")?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+applyStudentSession(getCurrentStudent());

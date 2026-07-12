@@ -6,7 +6,7 @@
     <title>Curso de TI Basico - Apostila do Aluno</title>
     <link rel="stylesheet" href="assets/styles.css">
   </head>
-  <body class="course-page">
+  <body class="course-page requires-auth">
     <main class="course-document">
       <header class="course-cover">
         <img src="assets/curso-ti-banner.png" alt="Ambiente de estudos com notebook, planilhas e documentos">
@@ -16,6 +16,33 @@
           <span>Excel e programas do Office para quem esta comecando do zero</span>
         </div>
       </header>
+
+      <section id="student-login" class="login-section">
+        <h2>Entrar no curso</h2>
+        <p>
+          Digite o nome completo cadastrado e o CPF usado como senha. Depois de entrar, o resultado do
+          check final sera enviado com o seu cadastro.
+        </p>
+        <form id="studentLoginForm" class="login-form">
+          <label>
+            Nome completo
+            <input type="text" id="loginFullName" autocomplete="name" placeholder="Digite o nome completo" required>
+          </label>
+          <label>
+            CPF
+            <input type="password" id="loginCpf" inputmode="numeric" autocomplete="current-password" placeholder="Digite apenas numeros ou com pontos" required>
+          </label>
+          <button class="quiz-button" type="submit">Entrar</button>
+        </form>
+        <div id="loginMessage" class="login-message" aria-live="polite">
+          O acesso sera liberado apos a validacao do cadastro.
+        </div>
+      </section>
+
+      <section id="student-session" class="session-bar">
+        <span id="studentSessionName">Aluno autenticado</span>
+        <button class="quiz-button secondary" type="button" id="logoutStudent">Sair</button>
+      </section>
 
       <section class="course-intro">
         <h2>Como usar este curso</h2>

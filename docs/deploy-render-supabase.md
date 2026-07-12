@@ -15,7 +15,33 @@ Isso cria a tabela:
 public.retention_submissions
 ```
 
-Os alunos poderao enviar respostas, mas nao poderao ler as respostas dos outros alunos pela API publica.
+Tambem cria:
+
+```text
+public.students
+public.authenticate_student(nome, cpf)
+```
+
+Os alunos poderao entrar com nome e CPF, enviar respostas, mas nao poderao ler as respostas dos outros alunos pela API publica.
+
+## 1.1. Cadastrar alunos
+
+Para cadastrar um aluno, use o modelo:
+
+[supabase/add-student.example.sql](../supabase/add-student.example.sql)
+
+Exemplo:
+
+```sql
+insert into public.students (full_name, cpf_hash, class_name)
+values (
+  'Maria da Silva',
+  crypt(regexp_replace('12345678900', '\D', '', 'g'), gen_salt('bf')),
+  'Bloco 1'
+);
+```
+
+O CPF fica salvo como hash no banco. Nao salve CPF em texto puro.
 
 ## 2. Pegar as chaves do Supabase
 
@@ -93,6 +119,7 @@ Table Editor > retention_submissions
 
 Campos principais:
 
+- `student_id`: aluno autenticado
 - `student_name`: nome do aluno
 - `class_name`: turma ou observacao
 - `score`: quantidade de acertos

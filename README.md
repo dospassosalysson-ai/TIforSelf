@@ -61,6 +61,7 @@ Ele contem explicacoes, passos e praticas para cada aula. A apostila considera u
 - Prints reais/oficiais de telas do Windows e do Office.
 - Caixas com erros comuns, cuidados e exercicios guiados.
 - Check de retencao interativo no final, com 15 perguntas, correcao automatica, acertos, erros e pontos para revisar.
+- Login de aluno com nome completo e CPF, validado pelo Supabase com CPF salvo como hash.
 
 PDF atualizado:
 
@@ -78,4 +79,5 @@ Arquivos principais:
 
 - [render.yaml](C:/Users/ArT/Documents/CURSO%20DE%20TI/render.yaml)
 - [supabase/schema.sql](C:/Users/ArT/Documents/CURSO%20DE%20TI/supabase/schema.sql)
+- [supabase/add-student.example.sql](C:/Users/ArT/Documents/CURSO%20DE%20TI/supabase/add-student.example.sql)
 - [docs/deploy-render-supabase.md](C:/Users/ArT/Documents/CURSO%20DE%20TI/docs/deploy-render-supabase.md)
