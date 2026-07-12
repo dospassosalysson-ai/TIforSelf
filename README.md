@@ -62,6 +62,8 @@ Ele contem explicacoes, passos e praticas para cada aula. A apostila considera u
 - Caixas com erros comuns, cuidados e exercicios guiados.
 - Check de retencao interativo no final, com 15 perguntas, correcao automatica, acertos, erros e pontos para revisar.
 - Login de aluno com nome completo e CPF, validado pelo Supabase com CPF salvo como hash.
+- Bloqueio de avanco: cada aula tem um check e a proxima aula so libera com 100% de acerto.
+- Painel do professor em [professor.html](C:/Users/ArT/Documents/CURSO%20DE%20TI/professor.html), com aderencia, progresso por aluno e dificuldade por aula.
 
 PDF atualizado:
 

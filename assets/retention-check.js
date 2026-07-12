@@ -36,10 +36,22 @@ function supabaseHeaders(prefer = "return=representation") {
 }
 
 async function submitToSupabase(payload) {
-  const response = await fetch(supabaseEndpoint("/rest/v1/retention_submissions"), {
+  const response = await fetch(supabaseEndpoint("/rest/v1/rpc/submit_retention_submission"), {
     method: "POST",
     headers: supabaseHeaders("return=minimal"),
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      p_session_token: payload.session_token,
+      p_score: payload.score,
+      p_total_questions: payload.total_questions,
+      p_correct_count: payload.correct_count,
+      p_wrong_count: payload.wrong_count,
+      p_missing_count: payload.missing_count,
+      p_percentage: payload.percentage,
+      p_answers: payload.answers,
+      p_review_items: payload.review_items,
+      p_user_agent: payload.user_agent,
+      p_page_url: payload.page_url
+    })
   });
 
   if (!response.ok) {
@@ -79,15 +91,17 @@ function getCurrentStudent() {
 function setCurrentStudent(student) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(student));
   applyStudentSession(student);
+  window.dispatchEvent(new CustomEvent("student-session-changed"));
 }
 
 function clearCurrentStudent() {
   sessionStorage.removeItem(SESSION_KEY);
   applyStudentSession(null);
+  window.dispatchEvent(new CustomEvent("student-session-changed"));
 }
 
 function applyStudentSession(student) {
-  const loggedIn = Boolean(student?.student_id);
+  const loggedIn = Boolean(student?.student_id && student?.session_token);
   document.body.classList.toggle("is-authenticated", loggedIn);
 
   if (studentSessionName) {
@@ -139,7 +153,7 @@ if (quizForm && quizResult) {
     const questions = Array.from(quizForm.querySelectorAll(".quiz-question"));
     const currentStudent = getCurrentStudent();
 
-    if (!currentStudent?.student_id) {
+    if (!currentStudent?.student_id || !currentStudent?.session_token) {
       quizResult.innerHTML = "<p class=\"submission-error\">Entre com nome completo e CPF antes de enviar o check.</p>";
       document.querySelector("#student-login")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -200,6 +214,7 @@ if (quizForm && quizResult) {
     const payload = {
       course_slug: getSupabaseConfig().courseSlug || "curso-ti-basico-bloco-1",
       student_id: currentStudent.student_id,
+      session_token: currentStudent.session_token,
       student_name: currentStudent.full_name,
       class_name: currentStudent.class_name || className?.value.trim() || null,
       score: correct,

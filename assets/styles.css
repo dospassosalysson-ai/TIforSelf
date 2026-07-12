@@ -1477,3 +1477,145 @@ a {
     break-inside: avoid;
   }
 }
+
+.lesson-progress-panel {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 20px;
+}
+
+.lesson-progress-panel h2 {
+  margin: 0 0 14px;
+}
+
+.lesson-progress-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lesson-progress-item {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #d6e3e6;
+  border-radius: 8px;
+  background: #fbfdfd;
+  padding: 10px;
+  text-decoration: none;
+}
+
+.lesson-progress-item strong {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #dce8ea;
+}
+
+.lesson-progress-item span,
+.lesson-progress-item em {
+  display: block;
+  grid-column: 2;
+}
+
+.lesson-progress-item em {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+}
+
+.lesson-progress-item.done strong {
+  background: #18834f;
+  color: white;
+}
+
+.lesson-progress-item.current {
+  border-color: var(--teal);
+  background: #edf7f5;
+}
+
+.lesson-lock-message,
+.lesson-gate,
+.gate-result {
+  margin-top: 18px;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.lesson-lock-message {
+  border-left: 5px solid #d58b16;
+  background: #fff8e8;
+  color: #76530a;
+}
+
+.lesson-gate {
+  border: 1px solid #c7dfe2;
+  background: #f7fbfc;
+}
+
+.gate-question {
+  margin: 12px 0;
+  border: 1px solid #d6e3e6;
+  border-radius: 8px;
+  background: white;
+  padding: 14px;
+}
+
+.gate-question legend {
+  font-weight: 700;
+}
+
+.gate-question label {
+  display: block;
+  margin-top: 10px;
+}
+
+.lesson-locked > :not(.eyebrow):not(h2):not(.lesson-lock-message) {
+  display: none;
+}
+
+.lesson-complete {
+  border-top: 6px solid #18834f;
+}
+
+.teacher-dashboard {
+  display: none;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.teacher-page .course-cover {
+  min-height: 300px;
+}
+
+@media (max-width: 980px) {
+  .lesson-progress-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .lesson-progress-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .requires-auth:not(.is-authenticated) .course-document > section:not(.login-section),
+  .lesson-locked > * {
+    display: revert !important;
+  }
+
+  .lesson-progress-panel,
+  .lesson-gate,
+  .lesson-lock-message {
+    display: none !important;
+  }
+}

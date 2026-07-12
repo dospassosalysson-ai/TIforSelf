@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Painel do Professor - Curso de TI</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body class="course-page teacher-page">
+    <main class="course-document">
+      <header class="course-cover">
+        <img src="assets/curso-ti-banner.png" alt="Ambiente de estudos com notebook, planilhas e documentos">
+        <div>
+          <p>Painel do professor</p>
+          <h1>Acompanhamento</h1>
+          <span>Aderencia, progresso por aula e pontos de dificuldade dos alunos.</span>
+        </div>
+      </header>
+
+      <section id="teacherLogin" class="login-section">
+        <h2>Entrar como professor</h2>
+        <p>Use um usuario criado em Supabase Auth para acessar o painel.</p>
+        <form id="teacherLoginForm" class="login-form">
+          <label>
+            E-mail
+            <input type="email" id="teacherEmail" autocomplete="email" required>
+          </label>
+          <label>
+            Senha
+            <input type="password" id="teacherPassword" autocomplete="current-password" required>
+          </label>
+          <button class="quiz-button" type="submit">Entrar</button>
+        </form>
+        <div id="teacherLoginMessage" class="login-message" aria-live="polite">Aguardando login.</div>
+      </section>
+
+      <section id="teacherDashboard" class="teacher-dashboard">
+        <div class="session-bar">
+          <span id="teacherSessionName">Professor autenticado</span>
+          <button class="quiz-button secondary" type="button" id="teacherLogout">Sair</button>
+        </div>
+
+        <section class="overview teacher-summary" id="teacherSummary"></section>
+
+        <section class="study-lesson">
+          <h2>Aderencia por aluno</h2>
+          <div class="table-wrap">
+            <table class="key-table" id="studentSummaryTable"></table>
+          </div>
+        </section>
+
+        <section class="study-lesson">
+          <h2>Dificuldade por aula</h2>
+          <div class="table-wrap">
+            <table class="key-table" id="lessonDifficultyTable"></table>
+          </div>
+        </section>
+
+        <section class="study-lesson">
+          <h2>Ultimas tentativas</h2>
+          <div class="table-wrap">
+            <table class="key-table" id="attemptsTable"></table>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/teacher-dashboard.js"></script>
+  </body>
+</html>

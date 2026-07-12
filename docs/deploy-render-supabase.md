@@ -19,7 +19,13 @@ Tambem cria:
 
 ```text
 public.students
+public.student_sessions
+public.lesson_attempts
+public.lesson_progress
 public.authenticate_student(nome, cpf)
+public.submit_lesson_attempt(...)
+public.teacher_student_summary
+public.teacher_lesson_difficulty
 ```
 
 Os alunos poderao entrar com nome e CPF, enviar respostas, mas nao poderao ler as respostas dos outros alunos pela API publica.
@@ -42,6 +48,48 @@ values (
 ```
 
 O CPF fica salvo como hash no banco. Nao salve CPF em texto puro.
+
+## 1.2. Criar usuario do professor
+
+O painel do professor usa Supabase Auth.
+
+No Supabase, abra:
+
+```text
+Authentication > Users > Add user
+```
+
+Crie um usuario com e-mail e senha para o professor.
+
+Depois acesse:
+
+```text
+/professor.html
+```
+
+O painel mostra:
+
+- progresso por aluno;
+- quantidade de aulas concluidas;
+- media de aproveitamento;
+- dificuldade por aula;
+- ultimas tentativas com erros.
+
+## 1.3. Bloqueio de avanco
+
+Cada aula tem um check proprio. O aluno so libera a proxima aula quando acerta 100% do check da aula atual.
+
+Cada tentativa fica salva em:
+
+```text
+public.lesson_attempts
+```
+
+Cada aula liberada/concluida fica salva em:
+
+```text
+public.lesson_progress
+```
 
 ## 2. Pegar as chaves do Supabase
 
