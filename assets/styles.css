@@ -559,12 +559,31 @@ a {
   color: #34434a;
 }
 
-.requires-auth:not(.is-authenticated) .course-document > section:not(.login-section) {
-  display: none;
+.requires-auth:not(.is-authenticated) {
+  min-height: 100vh;
+  background: #eef4f4;
+}
+
+.requires-auth:not(.is-authenticated) .course-document {
+  max-width: 760px;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.requires-auth:not(.is-authenticated) .course-document > :not(.login-section) {
+  display: none !important;
+}
+
+.requires-auth:not(.is-authenticated) .login-section {
+  width: 100%;
+  margin-top: 0;
+  box-shadow: 0 24px 70px rgba(5, 32, 38, 0.14);
 }
 
 .requires-auth.is-authenticated .login-section {
-  display: none;
+  display: none !important;
 }
 
 .login-form {
@@ -1432,8 +1451,15 @@ a {
     background: white;
   }
 
-  .requires-auth:not(.is-authenticated) .course-document > section:not(.login-section) {
+  .requires-auth:not(.is-authenticated) .course-document {
     display: block;
+    max-width: none;
+    min-height: auto;
+    padding: 0;
+  }
+
+  .requires-auth:not(.is-authenticated) .course-document > :not(.login-section) {
+    display: block !important;
   }
 
   .login-section,

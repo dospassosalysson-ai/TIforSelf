@@ -300,4 +300,5 @@ logoutStudent?.addEventListener("click", () => {
   document.querySelector("#student-login")?.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
-applyStudentSession(getCurrentStudent());
+sessionStorage.removeItem(SESSION_KEY);
+applyStudentSession(null);
