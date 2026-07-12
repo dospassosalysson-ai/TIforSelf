@@ -1,0 +1,13 @@
+services:
+  - type: web
+    runtime: static
+    name: curso-ti-basico
+    buildCommand: npm run build
+    staticPublishPath: .
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: COURSE_SLUG
+        value: curso-ti-basico-bloco-1

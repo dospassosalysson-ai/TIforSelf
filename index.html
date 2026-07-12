@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Curso de TI Basico</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegacao do curso">
+        <div class="brand">
+          <span class="brand-mark">TI</span>
+          <div>
+            <strong>Curso de TI</strong>
+            <span>Bloco 1 - Office e Excel</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" id="lessonNav"></nav>
+      </aside>
+
+      <main class="content">
+        <section class="hero">
+          <img src="assets/curso-ti-banner.png" alt="Ambiente de estudos com notebook, planilhas e documentos">
+          <div class="hero-copy">
+            <p>Curso basico</p>
+            <h1>Excel e programas do Office</h1>
+            <span>Uma plataforma simples para conduzir aulas, atividades e projeto final.</span>
+          </div>
+        </section>
+
+        <section class="toolbar" aria-label="Acoes do curso">
+          <a class="tool-button" href="curso.html" title="Abrir apostila completa do aluno">
+            <span aria-hidden="true">A</span>
+            Apostila
+          </a>
+          <button class="tool-button" type="button" id="printButton" title="Imprimir ou salvar em PDF">
+            <span aria-hidden="true">PDF</span>
+            Imprimir
+          </button>
+          <button class="tool-button" type="button" id="expandButton" title="Mostrar todos os detalhes">
+            <span aria-hidden="true">+</span>
+            Expandir
+          </button>
+        </section>
+
+        <section class="overview">
+          <div>
+            <span class="eyebrow">Objetivo</span>
+            <h2>Ensinar informatica de forma pratica</h2>
+            <p>
+              Ao final do Bloco 1, o aluno devera conseguir organizar arquivos, criar documentos no Word,
+              montar planilhas com formulas e graficos no Excel, preparar apresentacoes no PowerPoint e
+              exportar materiais em PDF.
+            </p>
+          </div>
+          <div class="stats" aria-label="Resumo do bloco">
+            <div><strong>12</strong><span>aulas</span></div>
+            <div><strong>24h</strong><span>sugeridas</span></div>
+            <div><strong>1</strong><span>projeto final</span></div>
+          </div>
+        </section>
+
+        <section class="module-grid" aria-label="Modulos do bloco">
+          <article>
+            <h3>Fundamentos</h3>
+            <p>Computador, arquivos, pastas, atalhos e organizacao.</p>
+          </article>
+          <article>
+            <h3>Word</h3>
+            <p>Documentos, formatacao, tabelas, imagens e PDF.</p>
+          </article>
+          <article>
+            <h3>Excel</h3>
+            <p>Celulas, formulas, tabelas, filtros e graficos.</p>
+          </article>
+          <article>
+            <h3>PowerPoint</h3>
+            <p>Slides, imagens, graficos e apresentacao oral.</p>
+          </article>
+        </section>
+
+        <section class="lesson-stage" id="lessonStage" aria-live="polite"></section>
+
+        <section class="project">
+          <div>
+            <span class="eyebrow">Projeto final</span>
+            <h2>Meu planejamento mensal</h2>
+            <p>
+              O aluno entrega um pacote completo com documento no Word, planilha no Excel,
+              apresentacao no PowerPoint e pelo menos uma versao em PDF.
+            </p>
+          </div>
+          <ul class="check-list">
+            <li>Documento explicando o planejamento.</li>
+            <li>Planilha com valores, formulas e grafico.</li>
+            <li>Apresentacao com 5 a 7 slides.</li>
+            <li>Arquivos organizados em uma pasta final.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <script src="assets/app.js"></script>
+  </body>
+</html>
