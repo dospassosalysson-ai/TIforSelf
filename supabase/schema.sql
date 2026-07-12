@@ -335,6 +335,8 @@ begin
   from public.lesson_progress lp
   where lp.student_id = current_student.id
     and lp.course_slug = 'curso-ti-basico-bloco-1'
+    and lp.total_questions >= 10
+    and lp.percentage = 100
   order by lp.lesson_id;
 end;
 $$;
@@ -370,8 +372,8 @@ begin
     raise exception 'Sessao do aluno invalida ou expirada.';
   end if;
 
-  if p_total_questions <= 0 then
-    raise exception 'Total de perguntas invalido.';
+  if p_total_questions < 10 then
+    raise exception 'Cada check precisa ter pelo menos 10 perguntas.';
   end if;
 
   computed_percentage := round((p_score::numeric / p_total_questions::numeric) * 100);
@@ -409,7 +411,9 @@ begin
   into completed_lessons
   from public.lesson_progress lp
   where lp.student_id = current_student.id
-    and lp.course_slug = 'curso-ti-basico-bloco-1';
+    and lp.course_slug = 'curso-ti-basico-bloco-1'
+    and lp.total_questions >= 10
+    and lp.percentage = 100;
 
   passed := did_pass;
   percentage := computed_percentage;
@@ -471,6 +475,8 @@ select
   round(avg(case when passed then 1 else 0 end) * 100)::integer as pass_rate,
   count(*) filter (where not passed)::integer as failed_attempts
 from public.lesson_attempts
+where course_slug = 'curso-ti-basico-bloco-1'
+  and total_questions >= 10
 group by lesson_id, lesson_title
 order by lesson_id;
 
@@ -488,6 +494,9 @@ select
   ) as last_activity
 from public.students s
 left join public.lesson_progress lp on lp.student_id = s.id
+  and lp.course_slug = 'curso-ti-basico-bloco-1'
+  and lp.total_questions >= 10
+  and lp.percentage = 100
 left join public.retention_submissions rs on rs.student_id = s.id
 group by s.id, s.full_name, s.class_name
 order by s.full_name;
@@ -534,6 +543,8 @@ begin
       from (
         select *
         from public.lesson_attempts
+        where course_slug = 'curso-ti-basico-bloco-1'
+          and total_questions >= 10
         order by created_at desc
         limit 30
       ) attempt
