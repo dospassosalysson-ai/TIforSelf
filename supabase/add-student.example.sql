@@ -5,6 +5,6 @@
 insert into public.students (full_name, cpf_hash, class_name)
 values (
   'NOME COMPLETO DO ALUNO',
-  crypt(regexp_replace('00000000000', '\D', '', 'g'), gen_salt('bf')),
+  extensions.crypt(regexp_replace('00000000000', '\D', '', 'g'), extensions.gen_salt('bf')),
   'Bloco 1'
 );

@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 create or replace function public.normalize_student_name(value text)
 returns text
@@ -195,7 +195,7 @@ begin
   from public.students s
   where s.active = true
     and s.normalized_name = public.normalize_student_name(p_full_name)
-    and s.cpf_hash = crypt(cleaned_cpf, s.cpf_hash)
+    and s.cpf_hash = extensions.crypt(cleaned_cpf, s.cpf_hash)
   limit 1;
 
   if found_student.id is null then
@@ -205,7 +205,7 @@ begin
   new_token := gen_random_uuid()::text || replace(gen_random_uuid()::text, '-', '');
 
   insert into public.student_sessions (student_id, token_hash)
-  values (found_student.id, encode(digest(new_token, 'sha256'), 'hex'))
+  values (found_student.id, encode(extensions.digest(new_token, 'sha256'), 'hex'))
   returning expires_at into session_expires_at;
 
   student_id := found_student.id;
@@ -241,7 +241,7 @@ begin
   from public.teachers t
   where t.active = true
     and t.normalized_name = public.normalize_student_name(p_full_name)
-    and t.cpf_hash = crypt(cleaned_cpf, t.cpf_hash)
+    and t.cpf_hash = extensions.crypt(cleaned_cpf, t.cpf_hash)
   limit 1;
 
   if found_teacher.id is null then
@@ -251,7 +251,7 @@ begin
   new_token := gen_random_uuid()::text || replace(gen_random_uuid()::text, '-', '');
 
   insert into public.teacher_sessions (teacher_id, token_hash)
-  values (found_teacher.id, encode(digest(new_token, 'sha256'), 'hex'))
+  values (found_teacher.id, encode(extensions.digest(new_token, 'sha256'), 'hex'))
   returning expires_at into session_expires_at;
 
   teacher_id := found_teacher.id;
@@ -276,7 +276,7 @@ begin
   into found_student
   from public.student_sessions ss
   join public.students s on s.id = ss.student_id
-  where ss.token_hash = encode(digest(coalesce(p_session_token, ''), 'sha256'), 'hex')
+  where ss.token_hash = encode(extensions.digest(coalesce(p_session_token, ''), 'sha256'), 'hex')
     and ss.expires_at > now()
     and s.active = true
   limit 1;
@@ -298,7 +298,7 @@ begin
   into found_teacher
   from public.teacher_sessions ts
   join public.teachers t on t.id = ts.teacher_id
-  where ts.token_hash = encode(digest(coalesce(p_session_token, ''), 'sha256'), 'hex')
+  where ts.token_hash = encode(extensions.digest(coalesce(p_session_token, ''), 'sha256'), 'hex')
     and ts.expires_at > now()
     and t.active = true
   limit 1;
@@ -578,6 +578,6 @@ grant select on public.teacher_student_summary to authenticated;
 -- insert into public.students (full_name, cpf_hash, class_name)
 -- values (
 --   'NOME COMPLETO DO ALUNO',
---   crypt(regexp_replace('00000000000', '\D', '', 'g'), gen_salt('bf')),
+--   extensions.crypt(regexp_replace('00000000000', '\D', '', 'g'), extensions.gen_salt('bf')),
 --   'Bloco 1'
 -- );

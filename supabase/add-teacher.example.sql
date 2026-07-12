@@ -5,7 +5,7 @@
 insert into public.teachers (full_name, cpf_hash, active)
 values (
   'NOME COMPLETO DO PROFESSOR',
-  crypt(regexp_replace('00000000000', '\D', '', 'g'), gen_salt('bf')),
+  extensions.crypt(regexp_replace('00000000000', '\D', '', 'g'), extensions.gen_salt('bf')),
   true
 )
 on conflict (normalized_name) do update
