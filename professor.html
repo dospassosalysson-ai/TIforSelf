@@ -19,15 +19,15 @@
 
       <section id="teacherLogin" class="login-section">
         <h2>Entrar como professor</h2>
-        <p>Use um usuario criado em Supabase Auth para acessar o painel.</p>
+        <p>Digite o nome completo cadastrado e o CPF usado como senha.</p>
         <form id="teacherLoginForm" class="login-form">
           <label>
-            E-mail
-            <input type="email" id="teacherEmail" autocomplete="email" required>
+            Nome completo
+            <input type="text" id="teacherFullName" autocomplete="name" required>
           </label>
           <label>
-            Senha
-            <input type="password" id="teacherPassword" autocomplete="current-password" required>
+            CPF
+            <input type="password" id="teacherCpf" inputmode="numeric" autocomplete="current-password" required>
           </label>
           <button class="quiz-button" type="submit">Entrar</button>
         </form>

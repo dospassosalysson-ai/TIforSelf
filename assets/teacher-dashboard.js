@@ -34,40 +34,50 @@ function clearTeacherSession() {
 }
 
 function applyTeacherSession(session) {
-  const loggedIn = Boolean(session?.access_token);
+  const loggedIn = Boolean(session?.teacher_id && session?.session_token);
   teacherLogin.style.display = loggedIn ? "none" : "block";
   teacherDashboard.style.display = loggedIn ? "block" : "none";
-  teacherSessionName.textContent = loggedIn ? `Professor: ${session.user?.email || "autenticado"}` : "";
+  teacherSessionName.textContent = loggedIn ? `Professor: ${session.full_name || "autenticado"}` : "";
 
   if (loggedIn) {
     loadTeacherDashboard();
   }
 }
 
-async function teacherFetch(path) {
-  const session = getTeacherSession();
-  const response = await fetch(teacherEndpoint(path), {
-    headers: {
-      "apikey": teacherConfig().supabaseAnonKey,
-      "Authorization": `Bearer ${session.access_token}`
-    }
+function supabaseRpcHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "apikey": teacherConfig().supabaseAnonKey,
+    "Authorization": `Bearer ${teacherConfig().supabaseAnonKey}`
+  };
+}
+
+async function loginTeacher(fullName, cpf) {
+  const response = await fetch(teacherEndpoint("/rest/v1/rpc/authenticate_teacher"), {
+    method: "POST",
+    headers: supabaseRpcHeaders(),
+    body: JSON.stringify({
+      p_full_name: fullName,
+      p_cpf: cpf
+    })
   });
 
   if (!response.ok) {
     throw new Error(await response.text());
   }
 
-  return response.json();
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows[0] : rows;
 }
 
-async function loginTeacher(email, password) {
-  const response = await fetch(teacherEndpoint("/auth/v1/token?grant_type=password"), {
+async function fetchTeacherDashboard() {
+  const session = getTeacherSession();
+  const response = await fetch(teacherEndpoint("/rest/v1/rpc/get_teacher_dashboard"), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": teacherConfig().supabaseAnonKey
-    },
-    body: JSON.stringify({ email, password })
+    headers: supabaseRpcHeaders(),
+    body: JSON.stringify({
+      p_session_token: session.session_token
+    })
   });
 
   if (!response.ok) {
@@ -91,12 +101,11 @@ function formatDate(value) {
 
 async function loadTeacherDashboard() {
   try {
-    const [students, difficulty, attempts, retention] = await Promise.all([
-      teacherFetch("/rest/v1/teacher_student_summary?select=*"),
-      teacherFetch("/rest/v1/teacher_lesson_difficulty?select=*"),
-      teacherFetch("/rest/v1/lesson_attempts?select=created_at,lesson_title,score,total_questions,percentage,passed,wrong_items,students(full_name)&order=created_at.desc&limit=30"),
-      teacherFetch("/rest/v1/retention_submissions?select=student_name,percentage,created_at&order=created_at.desc&limit=100")
-    ]);
+    const dashboard = await fetchTeacherDashboard();
+    const students = dashboard.students || [];
+    const difficulty = dashboard.difficulty || [];
+    const attempts = dashboard.attempts || [];
+    const retention = dashboard.retention || [];
 
     const avgRetention = retention.length
       ? Math.round(retention.reduce((sum, item) => sum + Number(item.percentage || 0), 0) / retention.length)
@@ -155,7 +164,7 @@ async function loadTeacherDashboard() {
         return `
           <tr>
             <td>${formatDate(attempt.created_at)}</td>
-            <td>${attempt.students?.full_name || "-"}</td>
+            <td>${attempt.student_name || "-"}</td>
             <td>${attempt.lesson_title}</td>
             <td>${attempt.score}/${attempt.total_questions} (${attempt.percentage}%)</td>
             <td>${attempt.passed ? "Liberou" : "Revisar"}</td>
@@ -177,10 +186,16 @@ teacherLoginForm?.addEventListener("submit", async (event) => {
 
   try {
     const session = await loginTeacher(
-      document.querySelector("#teacherEmail").value.trim(),
-      document.querySelector("#teacherPassword").value
+      document.querySelector("#teacherFullName").value.trim(),
+      document.querySelector("#teacherCpf").value
     );
+
+    if (!session?.teacher_id) {
+      throw new Error("Nome ou CPF invalidos.");
+    }
+
     setTeacherSession(session);
+    document.querySelector("#teacherCpf").value = "";
   } catch (error) {
     teacherLoginMessage.textContent = `Nao foi possivel entrar. ${error.message}`;
     teacherLoginMessage.className = "login-message error";

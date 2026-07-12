@@ -45,8 +45,46 @@ create trigger students_set_normalized_name
 before insert or update of full_name on public.students
 for each row execute function public.set_student_normalized_name();
 
+create table if not exists public.teachers (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  full_name text not null,
+  normalized_name text not null,
+  cpf_hash text not null,
+  active boolean not null default true,
+  unique (normalized_name)
+);
+
+create table if not exists public.teacher_sessions (
+  id uuid primary key default gen_random_uuid(),
+  teacher_id uuid not null references public.teachers(id) on delete cascade,
+  token_hash text not null,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default (now() + interval '12 hours')
+);
+
+create index if not exists teacher_sessions_token_hash_idx on public.teacher_sessions(token_hash);
+create index if not exists teacher_sessions_teacher_id_idx on public.teacher_sessions(teacher_id);
+
+create or replace function public.set_teacher_normalized_name()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.normalized_name := public.normalize_student_name(new.full_name);
+  return new;
+end;
+$$;
+
+drop trigger if exists teachers_set_normalized_name on public.teachers;
+create trigger teachers_set_normalized_name
+before insert or update of full_name on public.teachers
+for each row execute function public.set_teacher_normalized_name();
+
 alter table public.students enable row level security;
 alter table public.student_sessions enable row level security;
+alter table public.teachers enable row level security;
+alter table public.teacher_sessions enable row level security;
 
 drop policy if exists "Authenticated users can read students" on public.students;
 create policy "Authenticated users can read students"
@@ -180,6 +218,51 @@ $$;
 
 grant execute on function public.authenticate_student(text, text) to anon;
 
+create or replace function public.authenticate_teacher(p_full_name text, p_cpf text)
+returns table (
+  teacher_id uuid,
+  full_name text,
+  session_token text,
+  session_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  cleaned_cpf text;
+  new_token text;
+  found_teacher public.teachers%rowtype;
+begin
+  cleaned_cpf := regexp_replace(coalesce(p_cpf, ''), '\D', '', 'g');
+
+  select *
+  into found_teacher
+  from public.teachers t
+  where t.active = true
+    and t.normalized_name = public.normalize_student_name(p_full_name)
+    and t.cpf_hash = crypt(cleaned_cpf, t.cpf_hash)
+  limit 1;
+
+  if found_teacher.id is null then
+    return;
+  end if;
+
+  new_token := gen_random_uuid()::text || replace(gen_random_uuid()::text, '-', '');
+
+  insert into public.teacher_sessions (teacher_id, token_hash)
+  values (found_teacher.id, encode(digest(new_token, 'sha256'), 'hex'))
+  returning expires_at into session_expires_at;
+
+  teacher_id := found_teacher.id;
+  full_name := found_teacher.full_name;
+  session_token := new_token;
+  return next;
+end;
+$$;
+
+grant execute on function public.authenticate_teacher(text, text) to anon;
+
 create or replace function public.student_from_session(p_session_token text)
 returns public.students
 language plpgsql
@@ -199,6 +282,28 @@ begin
   limit 1;
 
   return found_student;
+end;
+$$;
+
+create or replace function public.teacher_from_session(p_session_token text)
+returns public.teachers
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  found_teacher public.teachers%rowtype;
+begin
+  select t.*
+  into found_teacher
+  from public.teacher_sessions ts
+  join public.teachers t on t.id = ts.teacher_id
+  where ts.token_hash = encode(digest(coalesce(p_session_token, ''), 'sha256'), 'hex')
+    and ts.expires_at > now()
+    and t.active = true
+  limit 1;
+
+  return found_teacher;
 end;
 $$;
 
@@ -377,12 +482,87 @@ select
   count(distinct lp.lesson_id)::integer as completed_lessons,
   coalesce(round(avg(lp.percentage))::integer, 0) as average_lesson_percentage,
   coalesce(max(rs.percentage), 0) as best_retention_percentage,
-  max(greatest(coalesce(lp.completed_at, '-infinity'::timestamptz), coalesce(rs.created_at, '-infinity'::timestamptz))) as last_activity
+  nullif(
+    max(greatest(coalesce(lp.completed_at, '-infinity'::timestamptz), coalesce(rs.created_at, '-infinity'::timestamptz))),
+    '-infinity'::timestamptz
+  ) as last_activity
 from public.students s
 left join public.lesson_progress lp on lp.student_id = s.id
 left join public.retention_submissions rs on rs.student_id = s.id
 group by s.id, s.full_name, s.class_name
 order by s.full_name;
+
+create or replace function public.get_teacher_dashboard(p_session_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_teacher public.teachers%rowtype;
+  payload jsonb;
+begin
+  current_teacher := public.teacher_from_session(p_session_token);
+
+  if current_teacher.id is null then
+    raise exception 'Sessao do professor invalida ou expirada.';
+  end if;
+
+  select jsonb_build_object(
+    'students', coalesce((
+      select jsonb_agg(to_jsonb(summary) order by summary.full_name)
+      from public.teacher_student_summary summary
+    ), '[]'::jsonb),
+    'difficulty', coalesce((
+      select jsonb_agg(to_jsonb(difficulty) order by difficulty.lesson_id)
+      from public.teacher_lesson_difficulty difficulty
+    ), '[]'::jsonb),
+    'attempts', coalesce((
+      select jsonb_agg(
+        jsonb_build_object(
+          'created_at', attempt.created_at,
+          'student_name', student.full_name,
+          'lesson_title', attempt.lesson_title,
+          'score', attempt.score,
+          'total_questions', attempt.total_questions,
+          'percentage', attempt.percentage,
+          'passed', attempt.passed,
+          'wrong_items', attempt.wrong_items
+        )
+        order by attempt.created_at desc
+      )
+      from (
+        select *
+        from public.lesson_attempts
+        order by created_at desc
+        limit 30
+      ) attempt
+      join public.students student on student.id = attempt.student_id
+    ), '[]'::jsonb),
+    'retention', coalesce((
+      select jsonb_agg(
+        jsonb_build_object(
+          'student_name', retention.student_name,
+          'percentage', retention.percentage,
+          'created_at', retention.created_at
+        )
+        order by retention.created_at desc
+      )
+      from (
+        select *
+        from public.retention_submissions
+        order by created_at desc
+        limit 100
+      ) retention
+    ), '[]'::jsonb)
+  )
+  into payload;
+
+  return payload;
+end;
+$$;
+
+grant execute on function public.get_teacher_dashboard(text) to anon;
 
 grant select on public.students to authenticated;
 grant select on public.lesson_attempts to authenticated;

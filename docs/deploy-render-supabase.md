@@ -51,15 +51,29 @@ O CPF fica salvo como hash no banco. Nao salve CPF em texto puro.
 
 ## 1.2. Criar usuario do professor
 
-O painel do professor usa Supabase Auth.
+O painel do professor usa nome completo e CPF, igual o login do aluno.
 
-No Supabase, abra:
+Use o modelo:
 
-```text
-Authentication > Users > Add user
+```sql
+insert into public.teachers (full_name, cpf_hash, active)
+values (
+  'NOME COMPLETO DO PROFESSOR',
+  crypt(regexp_replace('00000000000', '\D', '', 'g'), gen_salt('bf')),
+  true
+)
+on conflict (normalized_name) do update
+set
+  full_name = excluded.full_name,
+  cpf_hash = excluded.cpf_hash,
+  active = true;
 ```
 
-Crie um usuario com e-mail e senha para o professor.
+Tambem existe um arquivo de exemplo em:
+
+```text
+supabase/add-teacher.example.sql
+```
 
 Depois acesse:
 
