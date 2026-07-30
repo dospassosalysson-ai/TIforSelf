@@ -1,6 +1,6 @@
 # Deploy no Render com respostas no Supabase
 
-Este projeto esta preparado para funcionar como site estatico no Render e salvar as respostas do Check de Retencao no Supabase.
+Este projeto esta preparado para funcionar como Web Service Node no Render e salvar as respostas do Check de Retencao no Supabase.
 
 ## 1. Criar o banco no Supabase
 
@@ -157,9 +157,10 @@ O Render vai rodar:
 
 ```text
 npm run build
+npm start
 ```
 
-Esse comando gera `assets/runtime-config.js` com as configuracoes publicas do Supabase.
+Esse projeto precisa rodar como **Web Service / Node**, nao como **Static Site**, porque o navegador do aluno chama o proprio Render em `/api/...` e o Render conversa com o Supabase.
 
 ## 5. Testar depois do deploy
 

@@ -441,41 +441,21 @@ function getSessionToken() {
 
 async function fetchStudentProgress() {
   if (!isSupabaseConfigured() || !getSessionToken()) return [];
-
-  const response = await fetch(supabaseEndpoint("/rest/v1/rpc/get_student_progress"), {
-    method: "POST",
-    headers: supabaseHeaders(),
-    body: JSON.stringify({ p_session_token: getSessionToken() })
+  return window.courseApiRequest("/api/student/progress", {
+    sessionToken: getSessionToken()
   });
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  return response.json();
 }
 
 async function submitLessonAttempt(lesson, score, answers, wrongItems) {
-  const response = await fetch(supabaseEndpoint("/rest/v1/rpc/submit_lesson_attempt"), {
-    method: "POST",
-    headers: supabaseHeaders(),
-    body: JSON.stringify({
-      p_session_token: getSessionToken(),
-      p_lesson_id: lesson.id,
-      p_lesson_title: lesson.title,
-      p_score: score,
-      p_total_questions: lesson.questions.length,
-      p_answers: answers,
-      p_wrong_items: wrongItems
-    })
+  return window.courseApiRequest("/api/student/attempt", {
+    sessionToken: getSessionToken(),
+    lessonId: lesson.id,
+    lessonTitle: lesson.title,
+    score,
+    totalQuestions: lesson.questions.length,
+    answers,
+    wrongItems
   });
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  const rows = await response.json();
-  return Array.isArray(rows) ? rows[0] : rows;
 }
 
 function renderLessonGate(lesson) {

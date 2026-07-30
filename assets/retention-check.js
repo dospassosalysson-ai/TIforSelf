@@ -17,7 +17,7 @@ function getSupabaseConfig() {
 
 function isSupabaseConfigured() {
   const config = getSupabaseConfig();
-  return Boolean(config.supabaseUrl && config.supabaseAnonKey);
+  return Boolean(window.location.protocol.startsWith("http") || (config.supabaseUrl && config.supabaseAnonKey));
 }
 
 function supabaseEndpoint(path) {
@@ -35,48 +35,48 @@ function supabaseHeaders(prefer = "return=representation") {
   };
 }
 
-async function submitToSupabase(payload) {
-  const response = await fetch(supabaseEndpoint("/rest/v1/rpc/submit_retention_submission"), {
+async function courseApiRequest(path, payload) {
+  const response = await fetch(path, {
     method: "POST",
-    headers: supabaseHeaders("return=minimal"),
-    body: JSON.stringify({
-      p_session_token: payload.session_token,
-      p_score: payload.score,
-      p_total_questions: payload.total_questions,
-      p_correct_count: payload.correct_count,
-      p_wrong_count: payload.wrong_count,
-      p_missing_count: payload.missing_count,
-      p_percentage: payload.percentage,
-      p_answers: payload.answers,
-      p_review_items: payload.review_items,
-      p_user_agent: payload.user_agent,
-      p_page_url: payload.page_url
-    })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
   });
 
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Erro HTTP ${response.status}`);
+    throw new Error(data?.error || text || `Erro HTTP ${response.status}`);
   }
+
+  return data;
+}
+
+window.courseApiRequest = courseApiRequest;
+
+async function submitToSupabase(payload) {
+  await courseApiRequest("/api/student/retention", {
+    sessionToken: payload.session_token,
+    score: payload.score,
+    totalQuestions: payload.total_questions,
+    correctCount: payload.correct_count,
+    wrongCount: payload.wrong_count,
+    missingCount: payload.missing_count,
+    percentage: payload.percentage,
+    answers: payload.answers,
+    reviewItems: payload.review_items,
+    userAgent: payload.user_agent,
+    pageUrl: payload.page_url
+  });
 }
 
 async function authenticateStudent(fullName, cpf) {
-  const response = await fetch(supabaseEndpoint("/rest/v1/rpc/authenticate_student"), {
-    method: "POST",
-    headers: supabaseHeaders(),
-    body: JSON.stringify({
-      p_full_name: fullName,
-      p_cpf: cpf
-    })
+  return courseApiRequest("/api/student/login", {
+    fullName,
+    cpf
   });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Erro HTTP ${response.status}`);
-  }
-
-  const rows = await response.json();
-  return Array.isArray(rows) ? rows[0] : rows;
 }
 
 function getCurrentStudent() {

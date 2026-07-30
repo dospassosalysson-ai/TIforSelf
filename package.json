@@ -2,8 +2,12 @@
   "name": "curso-ti-basico",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "node scripts/create-runtime-config.js",
+    "start": "node server.js",
     "serve": "python -m http.server 4173 --bind 127.0.0.1"
   }
 }

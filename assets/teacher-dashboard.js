@@ -44,47 +44,37 @@ function applyTeacherSession(session) {
   }
 }
 
-function supabaseRpcHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "apikey": teacherConfig().supabaseAnonKey,
-    "Authorization": `Bearer ${teacherConfig().supabaseAnonKey}`
-  };
+async function teacherApiRequest(path, payload) {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    throw new Error(data?.error || text || `Erro HTTP ${response.status}`);
+  }
+
+  return data;
 }
 
 async function loginTeacher(fullName, cpf) {
-  const response = await fetch(teacherEndpoint("/rest/v1/rpc/authenticate_teacher"), {
-    method: "POST",
-    headers: supabaseRpcHeaders(),
-    body: JSON.stringify({
-      p_full_name: fullName,
-      p_cpf: cpf
-    })
+  return teacherApiRequest("/api/teacher/login", {
+    fullName,
+    cpf
   });
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  const rows = await response.json();
-  return Array.isArray(rows) ? rows[0] : rows;
 }
 
 async function fetchTeacherDashboard() {
   const session = getTeacherSession();
-  const response = await fetch(teacherEndpoint("/rest/v1/rpc/get_teacher_dashboard"), {
-    method: "POST",
-    headers: supabaseRpcHeaders(),
-    body: JSON.stringify({
-      p_session_token: session.session_token
-    })
+  return teacherApiRequest("/api/teacher/dashboard", {
+    sessionToken: session.session_token
   });
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  return response.json();
 }
 
 function renderTable(table, headers, rows) {
