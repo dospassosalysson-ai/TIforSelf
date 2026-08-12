@@ -435,6 +435,30 @@ const progressState = {
   loaded: false
 };
 
+function localProgressKey() {
+  const student = getCurrentStudent();
+  return student?.student_id ? `cursoTiLessonProgress:${student.student_id}` : "";
+}
+
+function getLocalCompletedLessons() {
+  const key = localProgressKey();
+  if (!key) return [];
+
+  try {
+    const raw = localStorage.getItem(key);
+    const values = raw ? JSON.parse(raw) : [];
+    return Array.isArray(values) ? values : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalCompletedLessons() {
+  const key = localProgressKey();
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify(Array.from(progressState.completed)));
+}
+
 function getSessionToken() {
   return getCurrentStudent()?.session_token || "";
 }
@@ -589,9 +613,12 @@ async function loadProgressForCurrentStudent() {
     return;
   }
 
+  getLocalCompletedLessons().forEach((lessonId) => progressState.completed.add(lessonId));
+
   try {
     const progress = await fetchStudentProgress();
     progress.forEach((item) => progressState.completed.add(item.lesson_id));
+    saveLocalCompletedLessons();
   } catch (error) {
     console.warn("Nao foi possivel carregar progresso", error);
   }
@@ -653,6 +680,7 @@ function setupGateSubmission() {
 
       if (attempt?.passed) {
         progressState.completed.add(lesson.id);
+        saveLocalCompletedLessons();
         result.innerHTML = "<p class=\"submission-ok\">Perfeito. Aula concluida e proxima aula liberada.</p>";
         applyLessonLocks();
         const nextIndex = LESSON_GATES.findIndex((item) => item.id === lesson.id) + 1;
@@ -667,6 +695,16 @@ function setupGateSubmission() {
         `;
       }
     } catch (error) {
+      if (score === lesson.questions.length) {
+        progressState.completed.add(lesson.id);
+        saveLocalCompletedLessons();
+        result.innerHTML = `
+          <p class="submission-warning">Voce acertou todas as perguntas. A aula foi liberada neste notebook, mas o servidor nao recebeu agora. Quando o sistema voltar, responda novamente se o professor precisar ver esta tentativa no painel.</p>
+        `;
+        applyLessonLocks();
+        return;
+      }
+
       result.innerHTML = `<p class="submission-error">Nao foi possivel salvar sua tentativa. ${error.message}</p>`;
     }
   });

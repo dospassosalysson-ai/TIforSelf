@@ -74,6 +74,15 @@ function firstRow(value) {
   return Array.isArray(value) ? value[0] || null : value;
 }
 
+async function healthCheck() {
+  const rows = await callSupabaseRpc("authenticate_student", {
+    p_full_name: "__healthcheck__",
+    p_cpf: "__healthcheck__"
+  });
+
+  return Array.isArray(rows);
+}
+
 async function handleApi(req, res) {
   try {
     const body = await readJson(req);
@@ -169,6 +178,15 @@ function serveStatic(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  if (req.method === "GET" && req.url === "/api/health") {
+    return healthCheck()
+      .then(() => sendJson(res, 200, { ok: true }))
+      .catch((error) => {
+        console.error(error);
+        sendJson(res, 500, { ok: false, error: "Supabase indisponivel." });
+      });
+  }
+
   if (req.method === "POST" && req.url.startsWith("/api/")) {
     return handleApi(req, res);
   }

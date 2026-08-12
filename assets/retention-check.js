@@ -10,6 +10,7 @@ const loginMessage = document.querySelector("#loginMessage");
 const studentSessionName = document.querySelector("#studentSessionName");
 const logoutStudent = document.querySelector("#logoutStudent");
 const SESSION_KEY = "cursoTiStudentSession";
+const REMEMBERED_SESSION_KEY = "cursoTiRememberedStudentSession";
 
 function getSupabaseConfig() {
   return window.COURSE_CONFIG || {};
@@ -81,7 +82,7 @@ async function authenticateStudent(fullName, cpf) {
 
 function getCurrentStudent() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(REMEMBERED_SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -90,12 +91,14 @@ function getCurrentStudent() {
 
 function setCurrentStudent(student) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(student));
+  localStorage.setItem(REMEMBERED_SESSION_KEY, JSON.stringify(student));
   applyStudentSession(student);
   window.dispatchEvent(new CustomEvent("student-session-changed"));
 }
 
 function clearCurrentStudent() {
   sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(REMEMBERED_SESSION_KEY);
   applyStudentSession(null);
   window.dispatchEvent(new CustomEvent("student-session-changed"));
 }
@@ -300,5 +303,4 @@ logoutStudent?.addEventListener("click", () => {
   document.querySelector("#student-login")?.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
-sessionStorage.removeItem(SESSION_KEY);
-applyStudentSession(null);
+applyStudentSession(getCurrentStudent());
